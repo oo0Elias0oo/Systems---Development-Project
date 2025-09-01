@@ -1,0 +1,27 @@
+commands on the VM's cmd:
+#nano /etc/netplan/01-netcfg.yaml
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp0s3:
+      dhcp4: yes
+(Ctrl+o , Enter , Ctrl+x)
+#sudo netplan apply
+#ping 8.8.8.8 (pinging should work now)
+#sudo apt update
+#sudo apt install openssh-server
+#sudo systemctl enable ssh
+#sudo nano /etc/ssh/sshd_config
+PermitRootLogin yes (connect on root user)
+PasswordAuthentication yes (uses password to access via ssh)
+Subsystem sftp /usr/lib/openssh/sftp-server (this is to enable scp for file tranfering)
+(Ctrl+o , Enter , Ctrl+x)
+#sudo systemctl restart ssh
+#sudo systemctl status ssh (i should say active)
+#passwd
+test1234
+test1234
+(changing the default password to our own for ssh login)
+#sudo systemctl restart ssh 
+#ssh root@vm_ip (test this on the host or on another vm and try to connect)
