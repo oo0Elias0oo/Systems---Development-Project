@@ -1,0 +1,160 @@
+# Copy project folder to VM via SCP
+scp -r C:\Users\User\myproject root@192.168.56.110:/root/myproject
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install Python, pip, virtualenv, Docker, and Nginx
+sudo apt install -y python3 python3-pip python3-venv docker.io nginx
+
+
+
+1.3. Configure Virtual Environment
+# Navigate to project folder
+cd /root/myproject
+
+# Create virtual environment
+python3 -m venv .venv
+
+# Activate virtual environment
+source .venv/bin/activate      # Linux
+# On Windows PowerShell: & .venv\Scripts\Activate.ps11.4. Install Python Dependencies
+pip install flask pymysql redis deep-translator
+
+
+1.4. Install Python Dependencies
+pip install flask pymysql redis deep-translator
+
+
+2.1. Install MySQL
+sudo apt install -y mysql-server
+sudo systemctl enable mysql
+sudo systemctl start mysql
+
+
+2.2. Configure Database
+-- Log in as root
+sudo mysql -u root
+
+-- Create database
+CREATE DATABASE translator_db;
+
+-- Create user and grant privileges
+CREATE USER 'translator_user'@'%' IDENTIFIED BY 'test1234';
+GRANT ALL PRIVILEGES ON translator_db.* TO 'translator_user'@'%';
+FLUSH PRIVILEGES;
+
+
+2.3. Verify Remote Connection
+mysql -h 192.168.56.109 -u translator_user -p translator_db
+
+
+
+3.1. Install Redis
+sudo apt install -y redis-server
+sudo systemctl enable redis-server
+sudo systemctl start redis-server
+
+
+3.2. Secure Redis
+
+Edit /etc/redis/redis.conf:
+
+requirepass test1234
+
+
+Restart Redis:
+
+sudo systemctl restart redis-server
+
+3.3. Test Redis
+redis-cli -h 192.168.56.109 -a "test1234" ping
+# Expected output: PONG
+
+4. Flask App Configuration
+4.1. app.py
+
+MySQL & Redis credentials:
+
+MYSQL_HOST = "192.168.56.109"
+MYSQL_DB = "translator_db"
+MYSQL_USER = "translator_user"
+MYSQL_PASSWORD = "test1234"
+
+REDIS_HOST = "192.168.56.109"
+REDIS_PORT = 6379
+REDIS_PASSWORD = "test1234"
+
+
+Flask routes:
+
+@app.route("/", methods=["GET", "POST"])
+def translate():
+    ...
+
+4.2. HTML
+
+templates/index.html:
+
+<form method="POST">
+    <textarea name="text" placeholder="Enter text"></textarea>
+    <select name="direction">
+        <option value="en_to_fr">English → French</option>
+        <option value="fr_to_en">French → English</option>
+    </select>
+    <button type="submit">Translate</button>
+</form>
+
+5. Running the Application
+5.1. Activate Virtual Environment
+source .venv/bin/activate    # Linux
+# On Windows PowerShell: & .venv\Scripts\Activate.ps1
+
+5.2. Run Flask
+python app.py
+
+
+The server runs on http://0.0.0.0:5000
+
+Access from host: http://<VM_IP>:5000
+
+6. Verify Database & Redis
+6.1. MySQL
+SELECT * FROM translations;
+
+
+Check that translations submitted via the web appear here.
+
+6.2. Redis
+redis-cli -h 192.168.56.109 -a "test1234"
+GET total_translated_words
+GET en_to_fr_count
+GET fr_to_en_count
+
+
+Verify counters are incrementing.
+
+7. Optional: Nginx Setup
+# Test Nginx
+nginx -t
+sudo systemctl restart nginx
+
+
+Configure reverse proxy for Flask:
+
+server {
+    listen 80;
+    server_name <VM_IP>;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+8. Troubleshooting
+Issue	Fix
+ModuleNotFoundError	Install missing package in .venv
+Bad Request 400	Ensure form field names match Flask request.form.get("field")
+MySQL Access Denied	Check username, host, password, and GRANT privileges
+Redis Connection Refused	Check host, port, password, and firewall
