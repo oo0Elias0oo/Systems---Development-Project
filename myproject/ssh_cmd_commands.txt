@@ -25,3 +25,4 @@ test1234
 (changing the default password to our own for ssh login)
 #sudo systemctl restart ssh 
 #ssh root@vm_ip (test this on the host or on another vm and try to connect)
+#ssh-keygen -R 192.168.56.109 (if trying another time to connect to the same vm but key changes)(run this on the host's cmd)
